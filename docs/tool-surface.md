@@ -205,10 +205,28 @@ Examples (mock data):
 }
 ```
 
-Rough budget (to be measured on Day 28 with the mock, then written back here):
-`search_products` page of 10 under ~600 tokens, `get_cart` under ~300,
-`get_order_status` under ~100. If a real OCC payload for the same call is 10×
-that, the `fields=` string is the first thing to check.
+**Measured Day 33** (`uv run scripts/measure_tokens.py`, claude-opus-5 tokens, mock OCC):
+
+| Tool call | raw OCC | trimmed, pretty | trimmed, compact | compact vs raw |
+|---|--:|--:|--:|--:|
+| search_products (5 hits) | 7199 | 318 | 225 | 3% |
+| get_product (4 variants) | 1371 | 287 | 201 | 15% |
+| get_cart (3 lines) | 984 | 310 | 223 | 23% |
+| get_order_history (4 orders) | 707 | 267 | 185 | 26% |
+| get_order_status (1 shipment) | 593 | 181 | 133 | 22% |
+| **all five** | 10854 | 1363 | 967 | 9% |
+
+Two findings. `fields=` trimming does most of the work (search: 7,199 → 318).
+And the MCP SDK pretty-prints a returned dict (`indent=2`), which cost another
+~30% across the board; the tools now return compact JSON themselves
+(`shaping.to_text`). The examples above are pretty-printed for reading only.
+
+**Caps (Day 33).** Lists OCC pages for us are bounded by `page_size` (1-20 in
+the schema). Lists it doesn't page are capped in `shaping.py`: variants 20, cart
+entries 50, order items 20, shipments 10. A capped result carries
+`truncated: true` and `<list>_total`, per rule 7. Cart totals come from OCC, so
+they stay right when entries are capped. Every tool's largest legal request must
+stay under `RESULT_BUDGET_CHARS` (6,000); `tests/test_shaping.py` guards it.
 
 **Decided Day 28: no `max_price` argument.** OCC filters price only through
 predefined facet ranges, not arbitrary bounds, so a `max_price` would have to be

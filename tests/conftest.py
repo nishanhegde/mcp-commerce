@@ -1,6 +1,6 @@
 import pytest
 
-from mock_occ.app import reset_state
+from mcp_commerce.mock_occ.app import reset_state
 
 
 @pytest.fixture(autouse=True)

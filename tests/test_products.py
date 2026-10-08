@@ -5,8 +5,8 @@ import json
 import pytest
 from mcp.server.mcpserver.exceptions import ToolError
 
-from mock_occ.app import apply_fields, parse_fields
-from server import mcp
+from mcp_commerce.mock_occ.app import apply_fields, parse_fields
+from mcp_commerce.server import mcp
 
 
 async def call(name: str, **args) -> dict:

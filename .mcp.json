@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mcp-commerce": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "mcp-commerce"],
+      "env": {
+        "OCC_MODE": "${OCC_MODE:-mock}"
+      }
+    }
+  }
+}

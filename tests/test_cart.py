@@ -5,7 +5,7 @@ import json
 import pytest
 from mcp.server.mcpserver.exceptions import ToolError
 
-from server import mcp
+from mcp_commerce.server import mcp
 
 
 async def call(name: str, **args) -> dict:

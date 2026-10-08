@@ -7,7 +7,8 @@ sees). See docs/tool-surface.md, "Response shapes".
 
 from typing import Literal
 
-from occ_client import OccClient
+from mcp_commerce.occ_client import OccClient
+from mcp_commerce.shaping import MAX_VARIANTS, capped, past_last_page
 
 SortOrder = Literal["relevance", "price_asc", "price_desc"]
 _OCC_SORT = {"relevance": "relevance", "price_asc": "price-asc", "price_desc": "price-desc"}
@@ -64,10 +65,9 @@ async def search_products(
     result["total_pages"] = pagination["totalPages"]
     result["total_results"] = pagination["totalResults"]
     if not products:
-        result["message"] = (
+        result["message"] = past_last_page(page, result["total_pages"], result["total_results"]) or (
             f"No products matched '{query}'"
             + (" in stock" if in_stock_only else "")
-            + (f" on page {page}" if page else "")
             + ". Try fewer or different keywords."
         )
     return result
@@ -89,7 +89,7 @@ async def get_product(client: OccClient, product_code: str) -> dict:
         result["stock_level"] = raw["stock"]["stockLevel"]
     result["categories"] = [c["name"] for c in raw.get("categories", [])]
     if raw.get("variantOptions"):
-        result["variants"] = [_variant(v) for v in raw["variantOptions"]]
+        capped(result, "variants", [_variant(v) for v in raw["variantOptions"]], MAX_VARIANTS)
     return result
 
 

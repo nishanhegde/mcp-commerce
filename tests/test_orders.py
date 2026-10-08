@@ -5,7 +5,7 @@ import json
 import pytest
 from mcp.server.mcpserver.exceptions import ToolError
 
-from server import mcp
+from mcp_commerce.server import mcp
 
 
 async def call(name: str, **args) -> dict:
@@ -49,6 +49,7 @@ async def test_wismo_order_1042():
     assert await call("get_order_status", order_code="1042") == {
         "order_code": "1042",
         "status": "IN_PROCESS",
+        "items": [{"product_code": "SH-204", "name": "Cloudrunner 2", "quantity": 2}],
         "shipments": [{
             "status": "SHIPPED", "tracking_id": "BD-99120384", "carrier": "BlueDart",
             "estimated_delivery": "2026-08-13", "shipped_on": "2026-08-10",
@@ -75,3 +76,25 @@ async def test_unknown_order_is_an_error_result():
 async def test_response_leaks_no_address_or_payment_data():
     text = (await mcp.call_tool("get_order_status", {"order_code": "1042"})).content[0].text
     assert "Pune" not in text and "Example Road" not in text and "CARD" not in text
+
+
+# --- where_is_my_order prompt
+
+
+async def prompt_text(**args) -> str:
+    return (await mcp.get_prompt("where_is_my_order", args)).messages[0].content.text
+
+
+async def test_prompt_with_an_order_code_goes_straight_to_status():
+    text = await prompt_text(order_code="1042")
+    assert "get_order_status" in text and "1042" in text
+    assert "get_order_history" not in text
+
+
+async def test_prompt_without_an_order_code_finds_it_first():
+    assert "get_order_history" in await prompt_text()
+
+
+async def test_server_exposes_no_static_resources():
+    # The Day 22 fake-catalog resource contradicted the mock; every fact comes from tools now.
+    assert await mcp.list_resources() == []

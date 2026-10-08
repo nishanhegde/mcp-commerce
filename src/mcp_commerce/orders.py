@@ -1,6 +1,7 @@
 """Order tools' logic: OCC request + response trimming. See catalog.py for the pattern."""
 
-from occ_client import OccClient
+from mcp_commerce.occ_client import OccClient
+from mcp_commerce.shaping import MAX_ORDER_ITEMS, MAX_SHIPMENTS, capped, past_last_page
 
 HISTORY_FIELDS = (
     "orders(code,placed,status,total(value,currencyIso)),"
@@ -9,7 +10,7 @@ HISTORY_FIELDS = (
 # carrier / estimatedDelivery are not standard OCC consignment fields. Asking for
 # a field the backend lacks just omits it, so one string works on both.
 STATUS_FIELDS = (
-    "code,status,"
+    "code,status,entries(quantity,product(code,name)),"
     "consignments(status,trackingID,shippingDate,carrier,estimatedDelivery)"
 )
 
@@ -40,7 +41,7 @@ async def get_order_history(
     result["total_pages"] = pagination["totalPages"]
     result["total_results"] = pagination["totalResults"]
     if not orders:
-        result["message"] = "No orders found" + (f" with status {status}." if status else " for this customer.")
+        result["message"] = past_last_page(page, result["total_pages"], result["total_results"]) or "No orders found" + (f" with status {status}." if status else " for this customer.")
     return result
 
 
@@ -48,7 +49,15 @@ async def get_order_status(client: OccClient, order_code: str) -> dict:
     raw = await client.get(f"{client.user_path}/orders/{order_code}", fields=STATUS_FIELDS)
 
     shipments = [_shipment(c) for c in raw.get("consignments", [])]
-    result: dict = {"order_code": raw["code"], "status": raw["status"], "shipments": shipments}
+    # The items let the agent act on a delay (check stock, offer a replacement)
+    # without a second round trip to look up what was ordered.
+    items = [
+        {"product_code": e["product"]["code"], "name": e["product"]["name"], "quantity": e["quantity"]}
+        for e in raw.get("entries", [])
+    ]
+    result: dict = {"order_code": raw["code"], "status": raw["status"]}
+    capped(result, "items", items, MAX_ORDER_ITEMS)
+    capped(result, "shipments", shipments, MAX_SHIPMENTS)
     if not shipments:
         result["message"] = "No shipments yet: the order has not been dispatched."
     return result

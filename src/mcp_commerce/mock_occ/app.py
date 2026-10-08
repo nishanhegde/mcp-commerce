@@ -16,7 +16,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from mock_occ.seed import ORDERS, PRODUCTS, price_dto
+from mcp_commerce.mock_occ.seed import ORDERS, PRODUCTS, price_dto
 
 DEFAULT_PAGE_SIZE = 20
 

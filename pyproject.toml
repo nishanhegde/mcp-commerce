@@ -1,18 +1,44 @@
 [project]
 name = "mcp-commerce"
 version = "0.1.0"
-description = "Add your description here"
+description = "MCP server for SAP Commerce (OCC): token-lean catalog, cart and order tools for AI agents, with a built-in OCC mock."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Nishan Hegde" }]
 requires-python = ">=3.12"
+keywords = ["mcp", "model-context-protocol", "sap-commerce", "hybris", "occ", "ai-agents", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Point-Of-Sale",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
-    "fastapi>=0.142.2",
+    "fastapi>=0.142.2",  # the built-in OCC mock (OCC_MODE=mock, the default)
     "httpx>=0.28.1",
-    "mcp[cli]>=2.1.1",
+    "mcp>=2.1.1",
     "python-dotenv>=1.2.3",
 ]
 
+[project.urls]
+Repository = "https://github.com/nishanhegde/mcp-commerce"
+Issues = "https://github.com/nishanhegde/mcp-commerce/issues"
+
+[project.scripts]
+mcp-commerce = "mcp_commerce.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [dependency-groups]
 dev = [
+    "anthropic>=1.11.0",  # examples/demo.py and scripts/measure_tokens.py; the server never calls a model
+    "mcp[cli]>=2.1.1",    # `mcp dev` (the MCP Inspector)
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
 ]

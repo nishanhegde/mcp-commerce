@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "mcp-commerce": {
+      "command": "/ABSOLUTE/PATH/TO/uv",
+      "args": ["--directory", "/ABSOLUTE/PATH/TO/mcp-commerce", "run", "mcp-commerce"],
+      "env": {
+        "OCC_MODE": "mock"
+      }
+    },
+    "mcp-commerce-live": {
+      "command": "/ABSOLUTE/PATH/TO/uv",
+      "args": ["--directory", "/ABSOLUTE/PATH/TO/mcp-commerce", "run", "mcp-commerce"],
+      "env": {
+        "OCC_MODE": "live",
+        "OCC_BASE_URL": "https://localhost:9002",
+        "OCC_BASE_SITE": "electronics",
+        "OCC_CLIENT_ID": "mobile_android",
+        "OCC_CLIENT_SECRET": "secret",
+        "OCC_USERNAME": "customer@example.com",
+        "OCC_PASSWORD": "",
+        "OCC_CA_BUNDLE": "/ABSOLUTE/PATH/TO/hybris-dev-ca.pem"
+      }
+    }
+  }
+}

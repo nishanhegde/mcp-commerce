@@ -11,3 +11,7 @@ wheels/
 
 # Local secrets (see .env.example)
 .env
+
+# Editor state and build output
+.vscode/
+dist/

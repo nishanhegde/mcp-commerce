@@ -1,6 +1,7 @@
 """Cart tools' logic: OCC request + response trimming. See catalog.py for the pattern."""
 
-from occ_client import OccClient, OccError
+from mcp_commerce.occ_client import OccClient, OccError
+from mcp_commerce.shaping import MAX_CART_ENTRIES, capped
 
 CART_FIELDS = (
     "code,totalItems,totalUnitCount,subTotal(value,currencyIso),totalPrice(value),"
@@ -19,24 +20,26 @@ async def create_cart(client: OccClient) -> dict:
 
 async def get_cart(client: OccClient, cart_id: str) -> dict:
     raw = await client.get(f"{client.user_path}/carts/{cart_id}", fields=CART_FIELDS)
-    return {
-        "cart_id": raw["code"],
-        "currency": raw["subTotal"]["currencyIso"],
-        "entries": [
-            {
-                "entry_number": e["entryNumber"],
-                "product_code": e["product"]["code"],
-                "name": e["product"]["name"],
-                "quantity": e["quantity"],
-                "unit_price": e["basePrice"]["value"],
-                "line_total": e["totalPrice"]["value"],
-            }
-            for e in raw.get("entries", [])
-        ],
+    result = {"cart_id": raw["code"], "currency": raw["subTotal"]["currencyIso"]}
+    entries = [
+        {
+            "entry_number": e["entryNumber"],
+            "product_code": e["product"]["code"],
+            "name": e["product"]["name"],
+            "quantity": e["quantity"],
+            "unit_price": e["basePrice"]["value"],
+            "line_total": e["totalPrice"]["value"],
+        }
+        for e in raw.get("entries", [])
+    ]
+    capped(result, "entries", entries, MAX_CART_ENTRIES)
+    # Totals come from OCC, so they stay correct even when entries are capped.
+    result |= {
         "subtotal": raw["subTotal"]["value"],
         "total": raw["totalPrice"]["value"],
         "item_count": raw["totalUnitCount"],
     }
+    return result
 
 
 async def add_to_cart(client: OccClient, cart_id: str, product_code: str, quantity: int) -> dict:
