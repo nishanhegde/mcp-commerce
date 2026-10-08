@@ -31,6 +31,7 @@ import random
 import time
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from urllib.parse import quote
 
 import httpx
 from mcp.server.mcpserver.exceptions import ToolError
@@ -227,6 +228,22 @@ def _no_answer(idempotent: bool, what: str) -> str:
         f"The commerce backend {what} during an update, so it may or may not have been applied. "
         "Call get_cart to see the cart's actual state before trying again."
     )
+
+
+def segment(value: str, what: str) -> str:
+    """Make a tool argument safe to put in a URL path, as exactly one segment.
+
+    httpx resolves dot segments before sending, so an order_code of
+    "../../../users/someone@example.com/orders" would request another
+    customer's orders, which a client_credentials token is allowed to read.
+    The model must never choose the identity (docs/tool-surface.md, principle
+    2), and a prompt injection can choose the model's arguments. So "/" is
+    percent-encoded, and "." and "..", the only values encoding leaves
+    meaningful, are refused.
+    """
+    if value in ("", ".", ".."):
+        raise OccError(f"{value!r} is not a valid {what}.")
+    return quote(value, safe="")
 
 
 def _retry_after_seconds(response: httpx.Response) -> float:

@@ -1,6 +1,6 @@
 """Order tools' logic: OCC request + response trimming. See catalog.py for the pattern."""
 
-from mcp_commerce.occ_client import OccClient
+from mcp_commerce.occ_client import OccClient, segment
 from mcp_commerce.shaping import MAX_ORDER_ITEMS, MAX_SHIPMENTS, capped, past_last_page
 
 HISTORY_FIELDS = (
@@ -46,7 +46,7 @@ async def get_order_history(
 
 
 async def get_order_status(client: OccClient, order_code: str) -> dict:
-    raw = await client.get(f"{client.user_path}/orders/{order_code}", fields=STATUS_FIELDS)
+    raw = await client.get(f"{client.user_path}/orders/{segment(order_code, 'order code')}", fields=STATUS_FIELDS)
 
     shipments = [_shipment(c) for c in raw.get("consignments", [])]
     # The items let the agent act on a delay (check stock, offer a replacement)

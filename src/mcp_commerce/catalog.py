@@ -7,7 +7,7 @@ sees). See docs/tool-surface.md, "Response shapes".
 
 from typing import Literal
 
-from mcp_commerce.occ_client import OccClient
+from mcp_commerce.occ_client import OccClient, segment
 from mcp_commerce.shaping import MAX_VARIANTS, capped, past_last_page
 
 SortOrder = Literal["relevance", "price_asc", "price_desc"]
@@ -74,7 +74,7 @@ async def search_products(
 
 
 async def get_product(client: OccClient, product_code: str) -> dict:
-    raw = await client.get(f"products/{product_code}", fields=PRODUCT_FIELDS)
+    raw = await client.get(f"products/{segment(product_code, 'product code')}", fields=PRODUCT_FIELDS)
 
     result = {
         "code": raw["code"],

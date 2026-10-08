@@ -174,7 +174,7 @@ uv run examples/demo.py "Do you have Trail Pro in size 10?"
 
 All settings are environment variables, read and validated once by
 [`config.py`](src/mcp_commerce/config.py). Precedence: the process environment (a client's
-`env` block, your shell), then `.env` in the working directory, then defaults. A bad
+`env` block, your shell), then `.env` in the repo root (source checkouts only), then defaults. A bad
 configuration stops the server at startup with every problem listed.
 
 ```bash

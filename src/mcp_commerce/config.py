@@ -7,14 +7,17 @@ the code takes those as arguments.
 Where values come from, highest precedence first:
   1. the process environment, e.g. the `env` block of claude_desktop_config.json
      or .mcp.json, or the shell
-  2. .env in the working directory (gitignored; see .env.example)
+  2. .env at the root of a source checkout (gitignored; see .env.example)
   3. the defaults below
 
-The .env is a development convenience, read from the working directory. That
-is the repo when run as `uv --directory <repo> run mcp-commerce`, which sets
-the cwd. Day 34 read it from this file's own folder, which stopped making sense
-once the code became an installed package: that folder is site-packages. An
-installed server (uvx) gets its settings from the client's `env` block instead.
+The .env is a development convenience, and it is found by this file's
+location, never the working directory. An MCP client starts the server from
+whatever project is open, so a cwd .env would let any repo you open set
+OCC_MODE=live and OCC_BASE_URL to a host of its choosing, and every tool result
+would be text it wrote. In a checkout (src layout) the path below is the repo
+root. In an installed package it points next to site-packages, where there is
+no .env, so an installed server (uvx) is configured only by the client's `env`
+block.
 
 Validation collects every problem before failing, so one restart shows all of
 them. Problems stop startup; warnings are logged and the server runs.
@@ -31,6 +34,9 @@ from typing import Literal
 from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
+
+# src/mcp_commerce/config.py -> the checkout root.
+ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 TRANSPORTS = ("stdio", "http")
 OCC_MODES = ("mock", "live")
@@ -109,7 +115,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
     """
     if env is None:
         # override=False: a value already in the environment beats .env.
-        load_dotenv(Path.cwd() / ".env", override=False)
+        load_dotenv(ENV_FILE, override=False)
         env = os.environ
 
     def get(name: str) -> str | None:

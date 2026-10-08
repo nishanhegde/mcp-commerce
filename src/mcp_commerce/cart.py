@@ -1,6 +1,6 @@
 """Cart tools' logic: OCC request + response trimming. See catalog.py for the pattern."""
 
-from mcp_commerce.occ_client import OccClient, OccError
+from mcp_commerce.occ_client import OccClient, OccError, segment
 from mcp_commerce.shaping import MAX_CART_ENTRIES, capped
 
 CART_FIELDS = (
@@ -19,7 +19,7 @@ async def create_cart(client: OccClient) -> dict:
 
 
 async def get_cart(client: OccClient, cart_id: str) -> dict:
-    raw = await client.get(f"{client.user_path}/carts/{cart_id}", fields=CART_FIELDS)
+    raw = await client.get(f"{client.user_path}/carts/{segment(cart_id, 'cart id')}", fields=CART_FIELDS)
     result = {"cart_id": raw["code"], "currency": raw["subTotal"]["currencyIso"]}
     entries = [
         {
@@ -44,7 +44,7 @@ async def get_cart(client: OccClient, cart_id: str) -> dict:
 
 async def add_to_cart(client: OccClient, cart_id: str, product_code: str, quantity: int) -> dict:
     raw = await client.post(
-        f"{client.user_path}/carts/{cart_id}/entries",
+        f"{client.user_path}/carts/{segment(cart_id, 'cart id')}/entries",
         json={"product": {"code": product_code}, "quantity": quantity},
         fields=MODIFICATION_FIELDS,
     )
